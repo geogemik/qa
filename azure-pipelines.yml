@@ -29,8 +29,7 @@ steps:
     backendAzureRmKey: 'terradeploy.terraform.tfstate'
 
 - task: TerraformTaskV4@4
-  condition: eq(variables.anyTfChanges, true)
-  inputs:
+    inputs:
     provider: 'azurerm'
     command: 'plan'
     environmentServiceNameAzureRM: 'Pay-As-You-Go (d2b83b21-b63f-4c16-a9c4-ee3d9553e497)'
