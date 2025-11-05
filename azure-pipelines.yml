@@ -1,19 +1,44 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
-- main
+  branches:
+    include:
+      - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+variables:
+  # Terraform Azure credentials (from Azure Service Principal)
+  ARM_CLIENT_ID: '$(servicePrincipalId)'
+  ARM_CLIENT_SECRET: '$(servicePrincipalKey)'
+  ARM_SUBSCRIPTION_ID: '$(subscriptionId)'
+  ARM_TENANT_ID: '$(tenantId)'
+  TF_VERSION: '1.9.5'     # Adjust to your Terraform version
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+stages:
+- stage: Terraform
+  displayName: "Provision Azure VM using Terraform"
+  jobs:
+  - job: terraform
+    displayName: "Terraform Init, Plan, Apply"
+    steps:
+    - checkout: self
+
+    # 1️⃣ Install Terraform
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: '$(TF_VERSION)'
+
+    # 2️⃣ Initialize Terraform
+    - script: |
+        terraform init -input=false
+      displayName: 'Terraform Init'
+
+    # 3️⃣ Plan Terraform changes
+    - script: |
+        terraform plan -input=false -out=tfplan
+      displayName: 'Terraform Plan'
+
+    # 4️⃣ Apply Terraform (auto-approve)
+    - script: |
+        terraform apply -input=false -auto-approve tfplan
+      displayName: 'Terraform Apply'
